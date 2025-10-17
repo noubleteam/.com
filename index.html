@@ -1391,14 +1391,14 @@
                 </li>
                 <li>Адрес: г. Брест</li>
               </ul>
-              <!-- <div class="mt-6">
+              <div class="mt-6">
                 <h4 class="font-semibold">Форма быстрой заявки</h4>
-                <form action="mailto:noubleteam@gmail.com" method="post" class="flex flex-col mt-3 gap-3">
+                <form id="leadForm" class="flex flex-col mt-3 gap-3">
                   <input
                     type="text"
                     name="name"
-                    placeholder="Имя"
-                    maxlength="100"
+                    placeholder="ФИО"
+                    maxlength="120"
                     class="w-full px-3 py-2 border rounded"
                     required
                   />
@@ -1431,7 +1431,7 @@
                     class="flex justify-center px-4 py-2 w-fill md:w-full rounded-md bg-blue-900 hover:bg-blue-800 text-white text-base font-normal"
                   />
                 </form>
-              </div> -->
+              </div>
             </div>
             <div class="text-base md:text-lg">
               <h4 class="font-semibold mb-2">Коротко о нас</h4>
@@ -1465,5 +1465,68 @@
         <div><span id="year">2025</span> | Nouble team</div>
       </div>
     </footer>
+
+    <div id="notify" class="hidden">Уведомление!</div>
   </body>
+
+  <script>
+    function showNotify(text, type) {
+      const el = document.getElementById("notify");
+      el.textContent = text;
+
+      if (type === "success")
+        el.className =
+          "fixed z-40 top-16 right-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-md shadow-md";
+      else if (type === "error")
+        el.className =
+          "fixed z-40 top-16 right-2 bg-red-600 text-white font-semibold px-4 py-2 rounded-md shadow-md";
+
+      setTimeout(() => {
+        setTimeout(() => (el.className = "hidden"), 500);
+      }, 3000);
+    }
+
+    document
+      .getElementById("leadForm")
+      .addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const form = e.target;
+        const data = {
+          fields: {
+            TITLE: "Новая заявка с сайта",
+            NAME: form.name.value,
+            PHONE: [{ VALUE: form.phone.value, VALUE_TYPE: "WORK" }],
+            EMAIL: [{ VALUE: form.email.value, VALUE_TYPE: "WORK" }],
+            COMMENTS: form.message.value,
+          },
+        };
+
+        const webhookUrl =
+          "https://b24-bm5ugx.bitrix24.by/rest/1/91mb0cbt2ecxofmx/crm.lead.add.json";
+
+        try {
+          const response = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.json();
+          if (result.result) {
+            form.reset();
+            showNotify("Заявка успешно отправлена!", "success");
+          } else {
+            console.error(result);
+            showNotify(
+              "Данные некорректны, проверьте правильность полей",
+              "error"
+            );
+          }
+        } catch (error) {
+          console.error(error);
+          showNotify("Ошибка соединения", "error");
+        }
+      });
+  </script>
 </html>
